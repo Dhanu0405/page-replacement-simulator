@@ -39,15 +39,15 @@ document.addEventListener('DOMContentLoaded', () => {
           case 'FIFO':
             simulationResult = simulateFIFO(pageRefs, frameCount);
             break;
-          case 'ModifiedFIFO':
-            simulationResult = simulateModifiedFIFO(pageRefs, frameCount);
-            break;
+          // case 'ModifiedFIFO':
+          //   simulationResult = simulateModifiedFIFO(pageRefs, frameCount);
+          //   break;
           case 'LRU':
             simulationResult = simulateLRU(pageRefs, frameCount);
             break;
-          case 'Optimal':
-            simulationResult = simulateOptimal(pageRefs, frameCount);
-            break;
+          // case 'Optimal':
+          //   simulationResult = simulateOptimal(pageRefs, frameCount);
+          //   break;
           default:
             alert('Algorithm not implemented.');
             return;
@@ -221,57 +221,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return { history, pageFaults };
   }
 
-  // Modified FIFO (Second-Chance Algorithm) Implementation
-  function simulateModifiedFIFO(pages, frameCount) {
-    let frames = Array(frameCount).fill(null); // Initialize frames
-    let referenceBits = Array(frameCount).fill(0); // Reference bits for second chance
-    let pageFaults = 0;
-    let history = [];
-    let pointer = 0; // Points to the frame to be replaced next
-
-    pages.forEach((page, index) => {
-      let fault = false;
-      let frameUpdated = null;
-      let hitFrames = [];
-
-      if (frames.includes(page)) {
-        // Page hit
-        const frameIndex = frames.indexOf(page);
-        referenceBits[frameIndex] = 1; // Set reference bit
-        hitFrames.push(frameIndex);
-      } else {
-        // Page fault
-        fault = true;
-        while (true) {
-          if (referenceBits[pointer] === 0) {
-            // Replace this page
-            frames[pointer] = page;
-            frameUpdated = pointer;
-            referenceBits[pointer] = 0; // Reset reference bit
-            pointer = (pointer + 1) % frameCount;
-            break;
-          } else {
-            // Give a second chance
-            referenceBits[pointer] = 0;
-            pointer = (pointer + 1) % frameCount;
-          }
-        }
-        pageFaults++;
-      }
-
-      history.push({
-        step: index + 1,
-        page: page,
-        frames: [...frames],
-        fault: fault,
-        frameUpdated: frameUpdated,
-        hitFrames: hitFrames, // Array of frame indices that had hits
-      });
-    });
-
-    return { history, pageFaults };
-  }
-
   function simulateLRU(pages, frameCount) {
     let frames = Array(frameCount).fill(null);
     let pageFaults = 0;
@@ -310,62 +259,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Update recent usage by adding the current page
       recentUsage.push(page);
-
-      history.push({
-        step: index + 1,
-        page: page,
-        frames: [...frames],
-        fault: fault,
-        frameUpdated: frameUpdated,
-        hitFrames: hitFrames, // Array of frame indices that had hits
-      });
-    });
-
-    return { history, pageFaults };
-  }
-
-  function simulateOptimal(pages, frameCount) {
-    let frames = Array(frameCount).fill(null);
-    let pageFaults = 0;
-    let history = [];
-
-    pages.forEach((page, index) => {
-      let fault = false;
-      let frameUpdated = null;
-      let hitFrames = [];
-
-      if (!frames.includes(page)) {
-        fault = true;
-        if (frames.includes(null)) {
-          const emptyIndex = frames.indexOf(null);
-          frames[emptyIndex] = page;
-          frameUpdated = emptyIndex;
-        } else {
-          // Predict future usage for each page in frames
-          let futureIndices = frames.map((framePage) => {
-            let nextUse = pages.slice(index + 1).indexOf(framePage);
-            return nextUse === -1 ? Infinity : nextUse;
-          });
-
-          // Select the frame with the farthest next use
-          let maxFuture = Math.max(...futureIndices);
-          let victimIndices = futureIndices
-            .map((val, idx) => ({ val, idx }))
-            .filter(obj => obj.val === maxFuture)
-            .map(obj => obj.idx);
-
-          // If multiple victims, select the first one
-          let victimIndex = victimIndices[0];
-
-          frames[victimIndex] = page;
-          frameUpdated = victimIndex;
-        }
-        pageFaults++;
-      } else {
-        // Page hit
-        const hitIndex = frames.indexOf(page);
-        hitFrames.push(hitIndex);
-      }
 
       history.push({
         step: index + 1,
@@ -607,9 +500,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const step = simulationHistory[stepIndex - 1];
       if (narrationText) {
         if (step.fault) {
-          narrationText.innerText = `At time T${step.step}, page ${step.page} caused a page fault and was loaded into Frame ${step.frameUpdated + 1}.`;
+          narrationText.innerText = `At time T${step.step}, page ${step.page} caused a page fault and was loaded into Frame ${step.frameUpdated + 1} - Page Miss.`;
         } else if (step.hitFrames.length > 0) {
-          narrationText.innerText = `At time T${step.step}, page ${step.page} was already in memory (Hit).`;
+          narrationText.innerText = `At time T${step.step}, page ${step.page} was already in memory - Page Hit.`;
         } else {
           narrationText.innerText = `At time T${step.step}, page ${step.page} was already in memory. No page fault occurred.`;
         }
@@ -617,42 +510,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       if (narrationText) {
         narrationText.innerText = 'Awaiting simulation...';
-      }
-    }
-  }
-
-  // ----------------------
-  // Generate AI Feedback Function
-  // ----------------------
-  async function generateFeedback(simulationData) {
-    const prompt = `The user has completed a page replacement simulation using the ${simulationData.algorithm} algorithm with ${simulationData.frames} frames and the page reference sequence ${simulationData.pageReferences.join(
-      ', '
-    )}. There were ${simulationData.pageFaults} page faults. Provide a simple explanation of the results and suggest if a different algorithm might perform better.`;
-
-    try {
-      const response = await fetch('/api/ai-feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: prompt }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-
-      const data = await response.json();
-      const aiFeedback = document.getElementById('aiFeedback');
-      if (aiFeedback) {
-        aiFeedback.innerText = data.feedback;
-      }
-    } catch (error) {
-      console.error('Error fetching AI feedback:', error);
-      // Display error message with highlighting
-      const aiFeedback = document.getElementById('aiFeedback');
-      if (aiFeedback) {
-        aiFeedback.innerText = 'Error fetching AI feedback.';
-        aiFeedback.classList.add('text-red-500');
-        aiFeedback.classList.remove('text-gray-800', 'dark:text-gray-200');
       }
     }
   }

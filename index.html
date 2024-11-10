@@ -35,9 +35,7 @@
           <label for="algorithm" class="block mb-1">Replacement Algorithm:</label>
           <select id="algorithm" class="w-full p-2 border rounded">
             <option value="FIFO">FIFO</option>
-            <option value="ModifiedFIFO">Modified FIFO (Second-Chance)</option>
             <option value="LRU">LRU</option>
-            <option value="Optimal">Optimal</option>
           </select>
         </div>
       </div>
@@ -69,12 +67,6 @@
       <p id="narrationText" class="italic">Awaiting simulation...</p>
     </section>
 
-    <!-- AI Feedback -->
-    <section id="feedbackSection" class="mb-6">
-      <h3 class="text-xl font-semibold mb-2">AI Feedback:</h3>
-      <p id="aiFeedback" class="p-4 bg-gray-200 dark:bg-gray-800 rounded"></p>
-    </section>
-
     <!-- Legend Section -->
     <section id="legend" class="mb-6">
       <h3 class="text-lg font-semibold">Legend:</h3>
@@ -84,30 +76,7 @@
       </ul>
     </section>
 
-    <!-- Performance Chart Section -->
-    <section id="performanceChartSection" class="mb-6 p-4 border rounded hidden">
-      <h2 class="text-xl font-semibold mb-4">Performance Chart</h2>
-      <canvas id="performanceChart" width="800" height="400"></canvas>
-      <button id="downloadChartBtn" class="mt-4 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded">
-        Download Chart
-      </button>
-    </section>
-
-    <!-- Show Chart Button -->
-    <button id="showChartBtn" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded">
-      Show Performance Chart
-    </button>
-  </div>
-
-  <!-- Include Tippy.js and Popper.js -->
-  <script src="https://unpkg.com/@popperjs/core@2"></script>
-  <script src="https://unpkg.com/tippy.js@6"></script>
-
-  <!-- Include Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <!-- Scripts -->
   <script src="app.js"></script>
-  <script src="chart.js"></script>
 </body>
 </html>
